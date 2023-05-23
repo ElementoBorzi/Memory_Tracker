@@ -9,6 +9,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 // Функция получения информации об использовании памяти
 void GetMemoryInfo(DWORDLONG& totalMemory, DWORDLONG& usedMemory, DWORDLONG& freeMemory);
 
+// Функция получения тактовой частоты и мощности памяти
+void GetMemoryClockSpeedAndLoad(DWORD& memoryClockSpeed, float& memoryLoadPercentage);
+
 // Обработчики элементов управления
 void OnPaint(HWND hwnd);
 void OnTimer(HWND hwnd);
@@ -27,6 +30,10 @@ DWORDLONG g_TotalMemory = 0;
 DWORDLONG g_UsedMemory = 0;
 DWORDLONG g_FreeMemory = 0;
 
+// Глобальные переменные для хранения информации о тактовой частоте и мощности памяти
+DWORD g_MemoryClockSpeed = 0;
+float g_MemoryLoadPercentage = 0.0f;
+
 // Хранит скопированную информацию о памяти
 std::vector<std::string> g_CopiedMemoryInfo;
 
@@ -39,9 +46,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     wc.lpszClassName = className;
     RegisterClass(&wc);
 
+    // Получение размеров экрана
+    int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+    int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+
+    // Расчет координат для центрирования окна
+    int windowWidth = 500;
+    int windowHeight = 150;
+    int windowX = (screenWidth - windowWidth) / 2;
+    int windowY = screenHeight - windowHeight;
+
     // Создание окна
     HWND hwnd = CreateWindowEx(0, className, "Memory Monitor", WS_OVERLAPPEDWINDOW & ~(WS_THICKFRAME | WS_MAXIMIZEBOX),
-                               CW_USEDEFAULT, CW_USEDEFAULT, 500, 150, NULL, NULL, hInstance, NULL);
+                               windowX, windowY, windowWidth, windowHeight, NULL, NULL, hInstance, NULL);
 
     // Создание кнопки "Скопировать"
     HWND buttonCopy = CreateWindow("BUTTON", "Copy", WS_TABSTOP | WS_VISIBLE | WS_CHILD,
@@ -49,7 +66,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     // Создание кнопки "GitHub"
     HWND buttonGitHub = CreateWindow("BUTTON", "GitHub", WS_TABSTOP | WS_VISIBLE | WS_CHILD,
-                                     10, 50, 80, 30, hwnd, (HMENU)BUTTON_GITHUB_ID, hInstance, NULL);
+                                     windowWidth - 90, 10, 80, 30, hwnd, (HMENU)BUTTON_GITHUB_ID, hInstance, NULL);
 
     // Отображение окна
     ShowWindow(hwnd, nCmdShow);
@@ -105,13 +122,24 @@ void GetMemoryInfo(DWORDLONG& totalMemory, DWORDLONG& usedMemory, DWORDLONG& fre
     freeMemory = memoryStatus.ullAvailPhys;
 }
 
+void GetMemoryClockSpeedAndLoad(DWORD& memoryClockSpeed, float& memoryLoadPercentage) {
+    MEMORYSTATUSEX memoryStatus;
+    memoryStatus.dwLength = sizeof(memoryStatus);
+    GlobalMemoryStatusEx(&memoryStatus);
+
+    memoryClockSpeed = memoryStatus.dwMemorySpeed;
+    memoryLoadPercentage = static_cast<float>(memoryStatus.dwMemoryLoad);
+}
+
 void OnPaint(HWND hwnd) {
     PAINTSTRUCT ps;
     HDC hdc = BeginPaint(hwnd, &ps);
 
     std::string text = "Total Memory: " + std::to_string(g_TotalMemory / (1024 * 1024)) + " MB\r\n";
     text += "Used Memory: " + std::to_string(g_UsedMemory / (1024 * 1024)) + " MB\r\n";
-    text += "Free Memory: " + std::to_string(g_FreeMemory / (1024 * 1024)) + " MB";
+    text += "Free Memory: " + std::to_string(g_FreeMemory / (1024 * 1024)) + " MB\r\n";
+    text += "Memory Clock Speed: " + std::to_string(g_MemoryClockSpeed) + " MHz\r\n";
+    text += "Memory Load: " + std::to_string(g_MemoryLoadPercentage) + "%";
 
     RECT rect;
     GetClientRect(hwnd, &rect);
@@ -126,16 +154,18 @@ void OnPaint(HWND hwnd) {
     EndPaint(hwnd, &ps);
 }
 
-
 void OnTimer(HWND hwnd) {
     GetMemoryInfo(g_TotalMemory, g_UsedMemory, g_FreeMemory);
+    GetMemoryClockSpeedAndLoad(g_MemoryClockSpeed, g_MemoryLoadPercentage);
     InvalidateRect(hwnd, NULL, TRUE);
 }
 
 void OnCopy(HWND hwnd) {
     std::string memoryInfo = "Total Memory: " + std::to_string(g_TotalMemory / (1024 * 1024)) + " MB\n";
     memoryInfo += "Used Memory: " + std::to_string(g_UsedMemory / (1024 * 1024)) + " MB\n";
-    memoryInfo += "Free Memory: " + std::to_string(g_FreeMemory / (1024 * 1024)) + " MB";
+    memoryInfo += "Free Memory: " + std::to_string(g_FreeMemory / (1024 * 1024)) + " MB\n";
+    memoryInfo += "Memory Clock Speed: " + std::to_string(g_MemoryClockSpeed) + " MHz\n";
+    memoryInfo += "Memory Load: " + std::to_string(g_MemoryLoadPercentage) + "%";
 
     // Добавляем информацию в вектор
     g_CopiedMemoryInfo.push_back(memoryInfo);
