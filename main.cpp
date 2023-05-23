@@ -30,8 +30,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     RegisterClass(&wc);
 
     // Создание окна
-    HWND hwnd = CreateWindowEx(0, className, "Memory Monitor", WS_OVERLAPPEDWINDOW,
-                               CW_USEDEFAULT, CW_USEDEFAULT, 300, 150, NULL, NULL, hInstance, NULL);
+    HWND hwnd = CreateWindowEx(0, className, "Memory Monitor", WS_OVERLAPPEDWINDOW | WS_VSCROLL,
+                               CW_USEDEFAULT, CW_USEDEFAULT, 300, 300, NULL, NULL, hInstance, NULL);
 
     // Отображение окна
     ShowWindow(hwnd, nCmdShow);
@@ -82,19 +82,4 @@ void OnPaint(HWND hwnd) {
     PAINTSTRUCT ps;
     HDC hdc = BeginPaint(hwnd, &ps);
 
-    std::string text = "Total Memory: " + std::to_string(g_TotalMemory / (1024 * 1024)) + " MB\n"
-                       "Used Memory: " + std::to_string(g_UsedMemory / (1024 * 1024)) + " MB\n"
-                       "Free Memory: " + std::to_string(g_FreeMemory / (1024 * 1024)) + " MB";
-
-    RECT rect;
-    GetClientRect(hwnd, &rect);
-
-    DrawText(hdc, text.c_str(), -1, &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
-
-    EndPaint(hwnd, &ps);
-}
-
-void OnTimer(HWND hwnd) {
-    GetMemoryInfo(g_TotalMemory, g_UsedMemory, g_FreeMemory);
-    InvalidateRect(hwnd, NULL, TRUE);
-}
+    std::string text = "Total
