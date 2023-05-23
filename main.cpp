@@ -140,7 +140,13 @@ void OnPaint(HWND hwnd) {
     text += "Used Memory: " + std::to_string(g_UsedMemory / (1024 * 1024)) + " MB\r\n";
     text += "Free Memory: " + std::to_string(g_FreeMemory / (1024 * 1024)) + " MB\r\n";
     text += "Memory Clock Speed: " + std::to_string(g_MemoryClockSpeed) + " MHz\r\n";
-    text += "Memory Load: " + std::to_string(g_UsedMemory * 100 / g_TotalMemory) + "%";
+
+    if (g_TotalMemory > 0) {
+        int memoryLoad = static_cast<int>((g_UsedMemory * 100) / g_TotalMemory);
+        text += "Memory Load: " + std::to_string(memoryLoad) + "%";
+    } else {
+        text += "Memory Load: N/A";
+    }
 
     RECT rect;
     GetClientRect(hwnd, &rect);
@@ -148,6 +154,7 @@ void OnPaint(HWND hwnd) {
 
     EndPaint(hwnd, &ps);
 }
+
 
 void OnTimer(HWND hwnd) {
     GetMemoryInfo(g_TotalMemory, g_UsedMemory, g_FreeMemory);
