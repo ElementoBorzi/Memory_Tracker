@@ -105,10 +105,17 @@ void OnPaint(HWND hwnd) {
     RECT rect;
     GetClientRect(hwnd, &rect);
 
-    DrawText(hdc, text.c_str(), -1, &rect, DT_LEFT | DT_TOP | DT_WORDBREAK);
+    int textLength = text.length();
+    int lineHeight = DrawText(hdc, text.c_str(), textLength, &rect, DT_CALCRECT | DT_LEFT | DT_BOTTOM | DT_WORDBREAK);
+
+    int textHeight = rect.bottom - rect.top;
+    rect.top = rect.bottom - textHeight;
+
+    DrawTextEx(hdc, const_cast<char*>(text.c_str()), textLength, &rect, DT_LEFT | DT_BOTTOM | DT_WORDBREAK, NULL);
 
     EndPaint(hwnd, &ps);
 }
+
 
 
 void OnTimer(HWND hwnd) {
