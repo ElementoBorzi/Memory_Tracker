@@ -98,17 +98,18 @@ void OnPaint(HWND hwnd) {
     PAINTSTRUCT ps;
     HDC hdc = BeginPaint(hwnd, &ps);
 
-    std::string text = "Total Memory: " + std::to_string(g_TotalMemory / (1024 * 1024)) + " MB\n";
-    text += "Used Memory: " + std::to_string(g_UsedMemory / (1024 * 1024)) + " MB\n";
+    std::string text = "Total Memory: " + std::to_string(g_TotalMemory / (1024 * 1024)) + " MB\r\n";
+    text += "Used Memory: " + std::to_string(g_UsedMemory / (1024 * 1024)) + " MB\r\n";
     text += "Free Memory: " + std::to_string(g_FreeMemory / (1024 * 1024)) + " MB";
 
     RECT rect;
     GetClientRect(hwnd, &rect);
 
-    DrawText(hdc, text.c_str(), -1, &rect, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
+    DrawText(hdc, text.c_str(), -1, &rect, DT_LEFT | DT_TOP | DT_WORDBREAK);
 
     EndPaint(hwnd, &ps);
 }
+
 
 void OnTimer(HWND hwnd) {
     GetMemoryInfo(g_TotalMemory, g_UsedMemory, g_FreeMemory);
