@@ -8,9 +8,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 // Функция получения информации об использовании памяти
 void GetMemoryInfo(DWORDLONG& totalMemory, DWORDLONG& usedMemory, DWORDLONG& freeMemory);
-
-// Функция получения тактовой частоты и мощности памяти
-void GetMemoryClockSpeedAndLoad(DWORD& memoryClockSpeed, float& memoryLoadPercentage);
+void GetMemoryClockSpeed(DWORD& memoryClockSpeed);
 
 // Обработчики элементов управления
 void OnPaint(HWND hwnd);
@@ -29,10 +27,7 @@ constexpr UINT_PTR BUTTON_GITHUB_ID = 3;
 DWORDLONG g_TotalMemory = 0;
 DWORDLONG g_UsedMemory = 0;
 DWORDLONG g_FreeMemory = 0;
-
-// Глобальные переменные для хранения информации о тактовой частоте и мощности памяти
 DWORD g_MemoryClockSpeed = 0;
-float g_MemoryLoadPercentage = 0.0f;
 
 // Хранит скопированную информацию о памяти
 std::vector<std::string> g_CopiedMemoryInfo;
@@ -50,15 +45,15 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     int screenWidth = GetSystemMetrics(SM_CXSCREEN);
     int screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
-    // Расчет координат для центрирования окна
-    int windowWidth = 500;
-    int windowHeight = 150;
-    int windowX = (screenWidth - windowWidth) / 2;
-    int windowY = screenHeight - windowHeight;
-
     // Создание окна
-    HWND hwnd = CreateWindowEx(0, className, "Memory Monitor", WS_OVERLAPPEDWINDOW & ~(WS_THICKFRAME | WS_MAXIMIZEBOX),
-                               windowX, windowY, windowWidth, windowHeight, NULL, NULL, hInstance, NULL);
+    HWND hwnd = CreateWindowEx(0, className, "Memory Monitor", WS_OVERLAPPEDWINDOW,
+                               (screenWidth - 500) / 2, screenHeight - 150, 500, 150, NULL, NULL, hInstance, NULL);
+
+    // Получение размеров окна
+    RECT windowRect;
+    GetClientRect(hwnd, &windowRect);
+    int windowWidth = windowRect.right - windowRect.left;
+    int windowHeight = windowRect.bottom - windowRect.top;
 
     // Создание кнопки "Скопировать"
     HWND buttonCopy = CreateWindow("BUTTON", "Copy", WS_TABSTOP | WS_VISIBLE | WS_CHILD,
@@ -99,8 +94,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
             if (LOWORD(wParam) == BUTTON_COPY_ID) {
                 OnCopy(hwnd);
                 return 0;
-            }
-            else if (LOWORD(wParam) == BUTTON_GITHUB_ID) {
+            } else if (LOWORD(wParam) == BUTTON_GITHUB_ID) {
                 OnGitHub(hwnd);
                 return 0;
             }
@@ -122,13 +116,20 @@ void GetMemoryInfo(DWORDLONG& totalMemory, DWORDLONG& usedMemory, DWORDLONG& fre
     freeMemory = memoryStatus.ullAvailPhys;
 }
 
-void GetMemoryClockSpeedAndLoad(DWORD& memoryClockSpeed, float& memoryLoadPercentage) {
-    MEMORYSTATUSEX memoryStatus;
-    memoryStatus.dwLength = sizeof(memoryStatus);
-    GlobalMemoryStatusEx(&memoryStatus);
+void GetMemoryClockSpeed(DWORD& memoryClockSpeed) {
+    HKEY hKey;
+    DWORD dwType, dwData, dwSize = sizeof(DWORD);
+    DWORD dwResult = RegOpenKeyEx(HKEY_LOCAL_MACHINE, "HARDWARE\\DESCRIPTION\\System\\CentralProcessor\\0", 0, KEY_READ, &hKey);
 
-    memoryClockSpeed = memoryStatus.dwMemorySpeed;
-    memoryLoadPercentage = static_cast<float>(memoryStatus.dwMemoryLoad);
+    if (dwResult == ERROR_SUCCESS) {
+        dwResult = RegQueryValueEx(hKey, "~MHz", NULL, &dwType, (LPBYTE)&dwData, &dwSize);
+        if (dwResult == ERROR_SUCCESS && dwType == REG_DWORD)
+            memoryClockSpeed = dwData;
+        else
+            memoryClockSpeed = 0;
+
+        RegCloseKey(hKey);
+    }
 }
 
 void OnPaint(HWND hwnd) {
@@ -139,55 +140,31 @@ void OnPaint(HWND hwnd) {
     text += "Used Memory: " + std::to_string(g_UsedMemory / (1024 * 1024)) + " MB\r\n";
     text += "Free Memory: " + std::to_string(g_FreeMemory / (1024 * 1024)) + " MB\r\n";
     text += "Memory Clock Speed: " + std::to_string(g_MemoryClockSpeed) + " MHz\r\n";
-    text += "Memory Load: " + std::to_string(g_MemoryLoadPercentage) + "%";
+    text += "Memory Load: " + std::to_string(g_UsedMemory * 100 / g_TotalMemory) + "%";
 
     RECT rect;
     GetClientRect(hwnd, &rect);
-
-    int textLength = text.length();
-    int textHeight = DrawText(hdc, text.c_str(), textLength, &rect, DT_CALCRECT | DT_LEFT | DT_BOTTOM | DT_WORDBREAK);
-
-    rect.top = rect.bottom - textHeight;
-
-    DrawTextEx(hdc, const_cast<char*>(text.c_str()), textLength, &rect, DT_LEFT | DT_BOTTOM | DT_WORDBREAK, NULL);
+    DrawText(hdc, text.c_str(), -1, &rect, DT_LEFT | DT_TOP);
 
     EndPaint(hwnd, &ps);
 }
 
 void OnTimer(HWND hwnd) {
     GetMemoryInfo(g_TotalMemory, g_UsedMemory, g_FreeMemory);
-    GetMemoryClockSpeedAndLoad(g_MemoryClockSpeed, g_MemoryLoadPercentage);
+    GetMemoryClockSpeed(g_MemoryClockSpeed);
     InvalidateRect(hwnd, NULL, TRUE);
 }
 
 void OnCopy(HWND hwnd) {
-    std::string memoryInfo = "Total Memory: " + std::to_string(g_TotalMemory / (1024 * 1024)) + " MB\n";
-    memoryInfo += "Used Memory: " + std::to_string(g_UsedMemory / (1024 * 1024)) + " MB\n";
-    memoryInfo += "Free Memory: " + std::to_string(g_FreeMemory / (1024 * 1024)) + " MB\n";
-    memoryInfo += "Memory Clock Speed: " + std::to_string(g_MemoryClockSpeed) + " MHz\n";
-    memoryInfo += "Memory Load: " + std::to_string(g_MemoryLoadPercentage) + "%";
+    std::string memoryInfo = "Total Memory: " + std::to_string(g_TotalMemory / (1024 * 1024)) + " MB\r\n";
+    memoryInfo += "Used Memory: " + std::to_string(g_UsedMemory / (1024 * 1024)) + " MB\r\n";
+    memoryInfo += "Free Memory: " + std::to_string(g_FreeMemory / (1024 * 1024)) + " MB\r\n";
+    memoryInfo += "Memory Clock Speed: " + std::to_string(g_MemoryClockSpeed) + " MHz\r\n";
+    memoryInfo += "Memory Load: " + std::to_string(g_UsedMemory * 100 / g_TotalMemory) + "%";
 
-    // Добавляем информацию в вектор
     g_CopiedMemoryInfo.push_back(memoryInfo);
-
-    // Копируем информацию в буфер обмена
-    if (OpenClipboard(hwnd)) {
-        EmptyClipboard();
-
-        HGLOBAL hMemory = GlobalAlloc(GMEM_MOVEABLE, memoryInfo.size() + 1);
-        if (hMemory) {
-            char* pMemory = (char*)GlobalLock(hMemory);
-            if (pMemory) {
-                memcpy(pMemory, memoryInfo.c_str(), memoryInfo.size() + 1);
-                GlobalUnlock(hMemory);
-                SetClipboardData(CF_TEXT, hMemory);
-            }
-        }
-
-        CloseClipboard();
-    }
 }
 
 void OnGitHub(HWND hwnd) {
-    ShellExecute(NULL, "open", "https://github.com/ElementoBorzi", NULL, NULL, SW_SHOWNORMAL);
+    ShellExecute(NULL, "open", "https://github.com", NULL, NULL, SW_SHOWNORMAL);
 }
