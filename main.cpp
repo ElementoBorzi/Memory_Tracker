@@ -46,8 +46,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     int screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
     // Создание окна
-    HWND hwnd = CreateWindowEx(0, className, "Memory Monitor", WS_OVERLAPPEDWINDOW,
-                               (screenWidth - 500) / 2, screenHeight - 150, 500, 150, NULL, NULL, hInstance, NULL);
+    HWND hwnd = CreateWindowEx(0, className, "Memory Monitor", WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME ^ WS_MAXIMIZEBOX,
+                           (screenWidth - 500) / 2, screenHeight - 650, 500, 150, NULL, NULL, hInstance, NULL);
 
     // Получение размеров окна
     RECT windowRect;
@@ -57,11 +57,11 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     // Создание кнопки "Скопировать"
     HWND buttonCopy = CreateWindow("BUTTON", "Copy", WS_TABSTOP | WS_VISIBLE | WS_CHILD,
-                                   10, 10, 80, 30, hwnd, (HMENU)BUTTON_COPY_ID, hInstance, NULL);
+                                   windowWidth - 90, 10, 80, 30, hwnd, (HMENU)BUTTON_GITHUB_ID, hInstance, NULL);
 
     // Создание кнопки "GitHub"
     HWND buttonGitHub = CreateWindow("BUTTON", "GitHub", WS_TABSTOP | WS_VISIBLE | WS_CHILD,
-                                     windowWidth - 90, 10, 80, 30, hwnd, (HMENU)BUTTON_GITHUB_ID, hInstance, NULL);
+                                     windowWidth - 90, 50, 80, 30, hwnd, (HMENU)BUTTON_GITHUB_ID, hInstance, NULL);
 
     // Отображение окна
     ShowWindow(hwnd, nCmdShow);
