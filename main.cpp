@@ -57,7 +57,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     // Создание кнопки "Скопировать"
     HWND buttonCopy = CreateWindow("BUTTON", "Copy", WS_TABSTOP | WS_VISIBLE | WS_CHILD,
-                                   windowWidth - 90, 10, 80, 30, hwnd, (HMENU)BUTTON_GITHUB_ID, hInstance, NULL);
+                                   windowWidth - 90, 10, 80, 30, hwnd, (HMENU)BUTTON_COPY_ID, hInstance, NULL);
 
     // Создание кнопки "GitHub"
     HWND buttonGitHub = CreateWindow("BUTTON", "GitHub", WS_TABSTOP | WS_VISIBLE | WS_CHILD,
@@ -167,10 +167,29 @@ void OnCopy(HWND hwnd) {
     memoryInfo += "Used Memory: " + std::to_string(g_UsedMemory / (1024 * 1024)) + " MB\r\n";
     memoryInfo += "Free Memory: " + std::to_string(g_FreeMemory / (1024 * 1024)) + " MB\r\n";
     memoryInfo += "Memory Clock Speed: " + std::to_string(g_MemoryClockSpeed) + " MHz\r\n";
-    memoryInfo += "Memory Load: " + std::to_string(g_UsedMemory * 100 / g_TotalMemory) + "%\r\n";
+    memoryInfo += "Memory Load: " + std::to_string(g_UsedMemory * 100 / g_TotalMemory) + "%\r\nGithub:https://github.com/ElementoBorzi/Memory_Tracker";
 
+    // Добавляем информацию в вектор
     g_CopiedMemoryInfo.push_back(memoryInfo);
+
+    // Копируем информацию в буфер обмена
+    if (OpenClipboard(hwnd)) {
+        EmptyClipboard();
+
+        HGLOBAL hMemory = GlobalAlloc(GMEM_MOVEABLE, memoryInfo.size() + 1);
+        if (hMemory) {
+            char* pMemory = (char*)GlobalLock(hMemory);
+            if (pMemory) {
+                memcpy(pMemory, memoryInfo.c_str(), memoryInfo.size() + 1);
+                GlobalUnlock(hMemory);
+                SetClipboardData(CF_TEXT, hMemory);
+            }
+        }
+
+        CloseClipboard();
+    }
 }
+
 
 void OnGitHub(HWND hwnd) {
     ShellExecute(NULL, "open", "https://github.com/ElementoBorzi/Memory_Tracker", NULL, NULL, SW_SHOWNORMAL);
