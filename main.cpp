@@ -40,7 +40,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     RegisterClass(&wc);
 
     // Создание окна
-    HWND hwnd = CreateWindowEx(0, className, "Memory Monitor", WS_OVERLAPPEDWINDOW,
+    HWND hwnd = CreateWindowEx(0, className, "Memory Monitor", WS_OVERLAPPEDWINDOW & ~(WS_THICKFRAME | WS_MAXIMIZEBOX),
                                CW_USEDEFAULT, CW_USEDEFAULT, 500, 150, NULL, NULL, hInstance, NULL);
 
     // Создание кнопки "Скопировать"
@@ -125,6 +125,7 @@ void OnPaint(HWND hwnd) {
 
     EndPaint(hwnd, &ps);
 }
+
 
 void OnTimer(HWND hwnd) {
     GetMemoryInfo(g_TotalMemory, g_UsedMemory, g_FreeMemory);
