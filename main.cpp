@@ -13,11 +13,14 @@ void GetMemoryInfo(DWORDLONG& totalMemory, DWORDLONG& usedMemory, DWORDLONG& fre
 void OnPaint(HWND hwnd);
 void OnTimer(HWND hwnd);
 void OnCopy(HWND hwnd);
+void OnGitHub(HWND hwnd);
 
 // Идентификатор таймера
 constexpr UINT_PTR TIMER_ID = 1;
 // Идентификатор кнопки "Скопировать"
 constexpr UINT_PTR BUTTON_COPY_ID = 2;
+// Идентификатор кнопки "GitHub"
+constexpr UINT_PTR BUTTON_GITHUB_ID = 3;
 
 // Глобальные переменные для хранения информации об использовании памяти
 DWORDLONG g_TotalMemory = 0;
@@ -43,6 +46,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     // Создание кнопки "Скопировать"
     HWND buttonCopy = CreateWindow("BUTTON", "Copy", WS_TABSTOP | WS_VISIBLE | WS_CHILD,
                                    10, 10, 80, 30, hwnd, (HMENU)BUTTON_COPY_ID, hInstance, NULL);
+
+    // Создание кнопки "GitHub"
+    HWND buttonGitHub = CreateWindow("BUTTON", "GitHub", WS_TABSTOP | WS_VISIBLE | WS_CHILD,
+                                     10, 50, 80, 30, hwnd, (HMENU)BUTTON_GITHUB_ID, hInstance, NULL);
 
     // Отображение окна
     ShowWindow(hwnd, nCmdShow);
@@ -76,6 +83,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
                 OnCopy(hwnd);
                 return 0;
             }
+            else if (LOWORD(wParam) == BUTTON_GITHUB_ID) {
+                OnGitHub(hwnd);
+                return 0;
+            }
             break;
         case WM_DESTROY:
             PostQuitMessage(0);
@@ -106,17 +117,14 @@ void OnPaint(HWND hwnd) {
     GetClientRect(hwnd, &rect);
 
     int textLength = text.length();
-    int lineHeight = DrawText(hdc, text.c_str(), textLength, &rect, DT_CALCRECT | DT_LEFT | DT_BOTTOM | DT_WORDBREAK);
+    int textHeight = DrawText(hdc, text.c_str(), textLength, &rect, DT_CALCRECT | DT_LEFT | DT_BOTTOM | DT_WORDBREAK);
 
-    int textHeight = rect.bottom - rect.top;
     rect.top = rect.bottom - textHeight;
 
     DrawTextEx(hdc, const_cast<char*>(text.c_str()), textLength, &rect, DT_LEFT | DT_BOTTOM | DT_WORDBREAK, NULL);
 
     EndPaint(hwnd, &ps);
 }
-
-
 
 void OnTimer(HWND hwnd) {
     GetMemoryInfo(g_TotalMemory, g_UsedMemory, g_FreeMemory);
@@ -147,4 +155,8 @@ void OnCopy(HWND hwnd) {
 
         CloseClipboard();
     }
+}
+
+void OnGitHub(HWND hwnd) {
+    ShellExecute(NULL, "open", "https://github.com/ElementoBorzi", NULL, NULL, SW_SHOWNORMAL);
 }
