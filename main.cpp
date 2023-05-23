@@ -46,7 +46,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     int screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
     // Создание окна
-    HWND hwnd = CreateWindowEx(0, className, "Memory Monitor", WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME ^ WS_MAXIMIZEBOX,
+    HWND hwnd = CreateWindowEx(0, className, "Memory Tracker", WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME ^ WS_MAXIMIZEBOX,
                            (screenWidth - 500) / 2, screenHeight - 650, 500, 150, NULL, NULL, hInstance, NULL);
 
     // Получение размеров окна
@@ -167,11 +167,11 @@ void OnCopy(HWND hwnd) {
     memoryInfo += "Used Memory: " + std::to_string(g_UsedMemory / (1024 * 1024)) + " MB\r\n";
     memoryInfo += "Free Memory: " + std::to_string(g_FreeMemory / (1024 * 1024)) + " MB\r\n";
     memoryInfo += "Memory Clock Speed: " + std::to_string(g_MemoryClockSpeed) + " MHz\r\n";
-    memoryInfo += "Memory Load: " + std::to_string(g_UsedMemory * 100 / g_TotalMemory) + "%";
+    memoryInfo += "Memory Load: " + std::to_string(g_UsedMemory * 100 / g_TotalMemory) + "%\r\n";
 
     g_CopiedMemoryInfo.push_back(memoryInfo);
 }
 
 void OnGitHub(HWND hwnd) {
-    ShellExecute(NULL, "open", "https://github.com", NULL, NULL, SW_SHOWNORMAL);
+    ShellExecute(NULL, "open", "https://github.com/ElementoBorzi/Memory_Tracker", NULL, NULL, SW_SHOWNORMAL);
 }
