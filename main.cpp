@@ -15,13 +15,13 @@ void OnPaint(HWND hwnd);
 void OnTimer(HWND hwnd);
 void OnCopy(HWND hwnd);
 void OnGitHub(HWND hwnd);
+void OnAlwaysOnTop(HWND hwnd);
 
-// Идентификатор таймера
+// Идентификаторы элементов управления
 constexpr UINT_PTR TIMER_ID = 1;
-// Идентификатор кнопки "Скопировать"
 constexpr UINT_PTR BUTTON_COPY_ID = 2;
-// Идентификатор кнопки "GitHub"
 constexpr UINT_PTR BUTTON_GITHUB_ID = 3;
+constexpr UINT_PTR CHECKBOX_ALWAYS_ON_TOP_ID = 4;
 
 // Глобальные переменные для хранения информации об использовании памяти
 DWORDLONG g_TotalMemory = 0;
@@ -29,8 +29,13 @@ DWORDLONG g_UsedMemory = 0;
 DWORDLONG g_FreeMemory = 0;
 DWORD g_MemoryClockSpeed = 0;
 
+// Переменная для хранения состояния "Always on Top"
+bool g_IsAlwaysOnTop = false;
+
 // Хранит скопированную информацию о памяти
 std::vector<std::string> g_CopiedMemoryInfo;
+
+#pragma comment(lib, "psapi.lib")
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow) {
     // Регистрация класса окна
@@ -47,7 +52,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     // Создание окна
     HWND hwnd = CreateWindowEx(0, className, "Memory Tracker", WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME ^ WS_MAXIMIZEBOX,
-                           (screenWidth - 500) / 2, screenHeight - 650, 500, 150, NULL, NULL, hInstance, NULL);
+                               (screenWidth - 500) / 2, screenHeight - 650, 500, 150, NULL, NULL, hInstance, NULL);
 
     // Получение размеров окна
     RECT windowRect;
@@ -62,6 +67,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     // Создание кнопки "GitHub"
     HWND buttonGitHub = CreateWindow("BUTTON", "GitHub", WS_TABSTOP | WS_VISIBLE | WS_CHILD,
                                      windowWidth - 90, 50, 80, 30, hwnd, (HMENU)BUTTON_GITHUB_ID, hInstance, NULL);
+
+    // Создание флажка "Always on Top"
+    HWND checkboxAlwaysOnTop = CreateWindow("BUTTON", "Always on Top", WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_AUTOCHECKBOX,
+                                             windowWidth - 220, 10, 120, 20, hwnd, (HMENU)CHECKBOX_ALWAYS_ON_TOP_ID, hInstance, NULL);
 
     // Отображение окна
     ShowWindow(hwnd, nCmdShow);
@@ -96,6 +105,9 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
                 return 0;
             } else if (LOWORD(wParam) == BUTTON_GITHUB_ID) {
                 OnGitHub(hwnd);
+                return 0;
+            } else if (LOWORD(wParam) == CHECKBOX_ALWAYS_ON_TOP_ID) {
+                OnAlwaysOnTop(hwnd);
                 return 0;
             }
             break;
@@ -193,4 +205,12 @@ void OnCopy(HWND hwnd) {
 
 void OnGitHub(HWND hwnd) {
     ShellExecute(NULL, "open", "https://github.com/ElementoBorzi/Memory_Tracker", NULL, NULL, SW_SHOWNORMAL);
+}
+
+void OnAlwaysOnTop(HWND hwnd) {
+    static bool alwaysOnTop = false;
+    alwaysOnTop = !alwaysOnTop;
+
+    HWND hWndInsertAfter = alwaysOnTop ? HWND_TOPMOST : HWND_NOTOPMOST;
+    SetWindowPos(hwnd, hWndInsertAfter, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 }
